@@ -71,7 +71,7 @@ Used to receive encoder data from an external node.
 | `rot_with_pwm`      | Manually rotate using PWM (in-place) |
 | `state_ctrl_button` | Change to joystick/autonomous mode   |
 
-![Configuration 1](Pasted%20image%2020250706143540.png)
+![Configuration 1](photo_6293828286987487559_y.jpg)
 
 ---
 
@@ -84,7 +84,7 @@ Used to receive encoder data from an external node.
 | `steer_samedir_axis` | Manually control all steering wheels in same direction (PWM) |
 | `steer_oppdir_axis`  | Rotate front wheels clockwise, back wheels anticlockwise     |
 
-![Configuration 2](Pasted%20image%2020250706143437.png)
+![Configuration 2](photo_6293828286987487556_y.jpg)
 
 ---
 
@@ -97,7 +97,7 @@ Used to receive encoder data from an external node.
 | `bl_wheel_axis` | Manually control back-left steering motor   |
 | `br_wheel_axis` | Manually control back-right steering motor  |
 
-![Configuration 3](Pasted%20image%2020250706143558.png)
+![Configuration 3](photo_6293828286987487558_y.jpg)
 
 ---
 
