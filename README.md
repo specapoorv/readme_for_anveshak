@@ -1,45 +1,80 @@
-# readme_for_anveshak
+# Readme
+
+## Overview 
+this file explains Full_Potential_Steering.py file 
+
 ## ROS Message Types Used
-*sensor_msgs/Joy Message* : reports the state of joystick axes and buttons, 
-msg structure is this -> 
-Header header         
-float32[] axes          # the axes measurements from a joystick  
-int32[] buttons         # the buttons measurements from a joystick
 
-example : 
-	Header: 
-		  stamp: 
-		    secs: 1722450542
-		    nsecs: 123456789
-	Axes: [0.0, -1.0, 0.5, 0.0]       # e.g., left stick Y fully down, right stick X halfway
-	Buttons: [0, 1, 0, 1, 0, 0]       # e.g., Button 1 and 3 are pressed
+### `sensor_msgs/Joy` Message
 
+Reports the state of joystick axes and buttons.  
+**Message structure:**
 
-*std_msgs/Int32MultiArray* : we use this msg to send pwm data 
-structure of pwm_msg is like this -> [fld, frd, bld, brd, fls, frs, bls, brs]
-(fld = front left drive and all integer values)
+```
+Header  header         
+float32[] axes         # the axes measurements from a joystick  
+int32[] buttons        # the buttons measurements from a joystick
+```
 
-_std_msgs/Float32MultiArray_ : we use this msg to receive encoder data from an external node 
+**Example:**
+
+```
+Header: 
+  stamp: 
+    secs: 1722450542
+    nsecs: 123456789
+Axes: [0.0, -1.0, 0.5, 0.0]       # e.g., left stick Y fully down, right stick X halfway  
+Buttons: [0, 1, 0, 1, 0, 0]       # e.g., Button 1 and 3 are pressed
+```
+
+---
+
+### `std_msgs/Int32MultiArray`
+
+Used to send PWM data.
+Structure of `pwm_msg`:
+
+```
+[fld, frd, bld, brd, fls, frs, bls, brs]
+```
+
+* `fld = front left drive` (all integer values)
+
+---
+
+### `std_msgs/Float32MultiArray`
+
+Used to receive encoder data from an external node.
+
+---
 
 ## Joystick Button and Axis Mapping
 
 | Name                         | Purpose                             |
 | ---------------------------- | ----------------------------------- |
-| `steer_unlock_axis`          | pressing it puts in configuration 2 |
-| `full_potential_unlock_axis` | pressing it puts in configuration 3 |
-also we will lock full potential if steer is unlocked and vice versa
+| `steer_unlock_axis`          | Pressing it puts in configuration 2 |
+| `full_potential_unlock_axis` | Pressing it puts in configuration 3 |
+
+> Full potential is locked if steer is unlocked and vice versa.
+
+---
+
 ### Configuration 1
 
-| Name                | Purpose                                 |
-| ------------------- | --------------------------------------- |
-| `forward_btn`       | Turn all wheels to face forward         |
-| `parallel_btn`      | Turn all wheels by 90 degrees clockwise |
-| `rotinplace_btn`    | Rotate rover in place (crab)            |
-| `fb_axis`           | Control forward/backward motion         |
-| `lr_axis`           | Control left/right motion               |
-| `rot_with_pwm`      | Manually rotate using PWM (in-place)    |
-| `state_ctrl_button` | change to joystick/autonomous           |
-![[Pasted image 20250706143540.png]]
+| Name                | Purpose                              |
+| ------------------- | ------------------------------------ |
+| `forward_btn`       | Turn all wheels to face forward      |
+| `parallel_btn`      | Turn all wheels by 90° clockwise     |
+| `rotinplace_btn`    | Rotate rover in place (crab)         |
+| `fb_axis`           | Control forward/backward motion      |
+| `lr_axis`           | Control left/right motion            |
+| `rot_with_pwm`      | Manually rotate using PWM (in-place) |
+| `state_ctrl_button` | Change to joystick/autonomous mode   |
+
+![Configuration 1](Pasted%20image%2020250706143540.png)
+
+---
+
 ### Configuration 2
 
 | Name                 | Purpose                                                      |
@@ -48,7 +83,11 @@ also we will lock full potential if steer is unlocked and vice versa
 | `parallel_btn`       | Steer all wheels anticlockwise to 45° (sideways direction)   |
 | `steer_samedir_axis` | Manually control all steering wheels in same direction (PWM) |
 | `steer_oppdir_axis`  | Rotate front wheels clockwise, back wheels anticlockwise     |
-![[Pasted image 20250706143437.png]]
+
+![Configuration 2](Pasted%20image%2020250706143437.png)
+
+---
+
 ### Configuration 3
 
 | Name            | Purpose                                     |
@@ -57,47 +96,83 @@ also we will lock full potential if steer is unlocked and vice versa
 | `fr_wheel_axis` | Manually control front-right steering motor |
 | `bl_wheel_axis` | Manually control back-left steering motor   |
 | `br_wheel_axis` | Manually control back-right steering motor  |
-![[Pasted image 20250706143558.png]]
-## joyCallback :
-- `self.mode`:  
-    An integer variable that stores the current **drive mode** level (ranging from `0` to `3`).
-    - Pressing `modeupbtn` increments `self.mode` (up to a maximum of 4 total modes)
-    - Pressing `modednbtn` decrements `self.mode` (down to 0)
-- `self.state`:  
-    A boolean variable used to toggle between  _joystick control_ and *autonomous mode*, toggled by pressing `state_ctrl_btn`.
-    if `self.state` == False | run steering() -> drive ()
-    if `self.state` == True | run drive()
-### configuration 1 : both not pressed (both locked)
-- `steering_ctrl_locked`: stores the state of `forward_btn`, `parallel_btn`, and `rotinplace_btn`
-- `drive_ctrl`: stores joystick axis values for `fb_axis` and `lr_axis` 
-- `rot_with_pwm`: stores the value of `rot_with_pwm` axis to enable manual rotation using PWM
-### configuration 2 : steer_unlock_axis is pressed (steer unlocked)
--  `steering_ctrl_unlocked`: stores the state of `forward_btn` and `parallel_btn`
--  `steering_ctrl_pwm`: stores the values of `steer_samedir_axis` and `steer_oppdir_axis` for manual PWM-based steering control
-### configuration : 3 full potential unlocked
--  `full_potential_pwm`: stores the individual axis values for controlling each wheel's steering independently == `fl_wheel_axis`, `fr_wheel_axis`, `bl_wheel_axis`, `br_wheel_axis`
 
-## EncCallback 
-we are getting enc data from another script in float32 values 
-we initialise an array enc_data and then store the data in this order 
-index :
-	0 : front left wheel encoder
-	1: negative of front right
-	2: negative of back left
-	3: back right wheel encoder
-negation ensures consistent encoeder polarity
+![Configuration 3](Pasted%20image%2020250706143558.png)
 
-## Steering() 
-### Steer() 
---- attributes : `initial_angles`, `final_angles`, `mode`
+---
 
-`mode` == 0 :  relative movement -> steer each wheel to go final angle away from initial_angle
-`mode` == 1 : absolute movement -> steer each wheel by absolute angles
-it steers until all 4 wheels are inside of an error threshold (also breaks if exceeds time threshold) 
-pwm is computed using proportional controller kp_steer 
-and pwm_msg is published
-then at the end puts steering_complete flag as True
+## `joyCallback`
 
+### `self.mode`
+
+Integer variable storing current **drive mode** level (`0` to `3`):
+
+* Press `modeupbtn` → `self.mode`++
+* Press `modednbtn` → `self.mode`--
+
+### `self.state`
+
+Boolean variable to toggle between **joystick** and **autonomous** mode:
+
+* If `self.state == False` → run `steering()` → `drive()`
+* If `self.state == True` → run `drive()` only
+
+---
+
+### Configuration 1: both locked
+
+* `steering_ctrl_locked`: state of `forward_btn`, `parallel_btn`, `rotinplace_btn`
+* `drive_ctrl`: joystick axis values for `fb_axis` and `lr_axis`
+* `rot_with_pwm`: axis value to enable manual rotation using PWM
+
+---
+
+### Configuration 2: steer unlocked
+
+* `steering_ctrl_unlocked`: state of `forward_btn`, `parallel_btn`
+* `steering_ctrl_pwm`: values of `steer_samedir_axis` and `steer_oppdir_axis` for manual PWM steering
+
+---
+
+### Configuration 3: full potential unlocked
+
+* `full_potential_pwm`: axis values = `[fl_wheel_axis, fr_wheel_axis, bl_wheel_axis, br_wheel_axis]`
+
+---
+
+## `EncCallback`
+
+Encoder data is received as `Float32MultiArray` from another node.
+It is stored in `enc_data` as:
+
+| Index | Wheel                |
+| ----- | -------------------- |
+| 0     | Front Left encoder   |
+| 1     | **-1 × Front Right** |
+| 2     | **-1 × Back Left**   |
+| 3     | Back Right encoder   |
+
+> Negation ensures consistent encoder polarity.
+
+---
+
+## `Steering()`
+
+### `Steer()`
+
+**Attributes:**
+
+* `initial_angles`, `final_angles`, `mode`
+
+| Mode | Description       |
+| ---- | ----------------- |
+| 0    | Relative movement |
+| 1    | Absolute movement |
+
+Steers until all wheels are within a threshold (or timeout).
+PWM is computed using a proportional controller (`kp_steer`) and published.
+
+```python
 self.pwm_msg.data = [
     0, 0, 0, 0,                    # Drive motors (not used here)
     pwm[0] * self.init_dir[4],    # Front Left Steering
@@ -105,37 +180,67 @@ self.pwm_msg.data = [
     pwm[2] * self.init_dir[6],    # Back Left Steering
     pwm[3] * self.init_dir[7]     # Back Right Steering
 ]
+```
 
-we use `self.init_dir` to flip control direction if there was some motor wiring or mounting direction issue 
-### Configuration 1 : both locked
-- if `forward_btn` is pressed -> call `steer()` but `final angle = initial angle`
-- if `parallel_btn` is pressed → call `steer()` with `final_angles = [90, 90, 90, 90]` 
-- if `rotinplace_btn` is pressed → call `steer()` with `final_angles = [45, -45, -45, 45]` and set `rotinplace = True` (rotation-in-place setup)
-- if `rot_with_pwm` axis is moved (instead of a button) → manually generate PWM for crab-style in-place rotation, without calling `steer()`.
-### configuration 2 : steer unlocked
-_doubt how deepcopy works             enc_data_new = copy.deepcopy(self.enc_data) # to create a deep copy of enc_data array, not a pointer equivalence. Is being used as the inital angle_
-- if `forward_btn` is pressed → steer all wheels **clockwise** to `+45°`
-- if `parallel_btn` is pressed → steer all wheels **anticlockwise** to `-45°`
-- if `steer_same_dir_axis` is moved → manually control all wheels with the same PWM (as in `forward_btn` case, but without calling `steer()`)
-- if `steer_opp_dir_axis` is moved → front wheels rotate clockwise, back wheels rotate anticlockwise, enabling a "twist" motion
-### Configuration 3 : full_potential unlocked 
-`full_potential_pwm` = [fl,fr,bl,br]
-each axis controls each steering motor and we can manually give pwm input
-#### drive()
-only works when both steering and full_potential is locked i.e __configuration 1__
+> `init_dir` is used to flip motor directions if needed.
 
-- if rotinplace_btn pressed it will first go through `steering()` function to turn rover
-	into crab position and then it goes in `drive()` where it publishes pwm_msg for *drive motors* with pwm that can be chosen using _self.mode_ (0 to 3) we can choose  from this array -> self.d_arr = [35,50,75,110,150] and then we can  finetune the pwm using lr_axis 
-	vel = self.d_arr[self.mode] * self.drive_ctrl[1]
+---
 
--  if `self.state == False` that is joystick control
-	velocity is calculated using lr_axis and omega is calculated using fb_axis
-	`velocity` = -self.d_arr[self.mode] * self.drive_ctrl[1] # lr axis
-    `omega` = -self.d_arr[self.mode] * self.drive_ctrl[0] # fb axis
-    then a moving average of velocity and omega is calculated by putting the values in queue, we do this because joystick axis might not be stable enough to give values 
+### Configuration 1: both locked
 
-	then pwm_msg is published in differential drive manner using avg velocity and avg omega
+* `forward_btn` → call `steer()` with `final_angle = initial_angle`
+* `parallel_btn` → `final_angles = [90, 90, 90, 90]`
+* `rotinplace_btn` → `final_angles = [45, -45, -45, 45]` and set `rotinplace = True`
+* `rot_with_pwm` (axis) → generate manual PWM, no `steer()` call
 
-- if `self.state == True` that is autonomous mode
-	then a predefined autonomous velocity and omega is given and again in differential drive manners its published
-	
+---
+
+### Configuration 2: steer unlocked
+
+> `_enc_data_new = copy.deepcopy(self.enc_data)`
+> Used to ensure deep copy (not pointer) for `initial_angles`.
+
+* `forward_btn` → steer to `+45°`
+* `parallel_btn` → steer to `-45°`
+* `steer_same_dir_axis` → same PWM to all wheels (no `steer()` call)
+* `steer_opp_dir_axis` → front clockwise, back anticlockwise
+
+---
+
+### Configuration 3: full potential unlocked
+
+`full_potential_pwm = [fl, fr, bl, br]`
+Each axis directly controls corresponding steering motor via PWM.
+
+---
+
+## `drive()`
+
+> Only active in **Configuration 1** (both locked)
+
+* If `rotinplace_btn` →
+
+  1. Use `steering()` to move into crab position
+  2. Use `drive()` to publish PWM for drive motors:
+
+     ```python
+     vel = self.d_arr[self.mode] * self.drive_ctrl[1]
+     ```
+
+---
+
+### If `self.state == False` (joystick mode)
+
+* `velocity = -self.d_arr[self.mode] * self.drive_ctrl[1]`
+* `omega = -self.d_arr[self.mode] * self.drive_ctrl[0]`
+
+These are smoothed using a **moving average queue** for stability.
+PWM is then published using differential drive logic.
+
+---
+
+### If `self.state == True` (autonomous mode)
+
+Use predefined autonomous `velocity` and `omega`, and publish PWM in same differential manner.
+
+---
