@@ -163,14 +163,18 @@ It is stored in `enc_data` as:
 **Attributes:**
 
 * `initial_angles`, `final_angles`, `mode`
+ 
+mode == 0 :  relative movement -> steer each wheel to go final angle away from initial_angle
 
-| Mode | Description       |
-| ---- | ----------------- |
-| 0    | Relative movement |
-| 1    | Absolute movement |
+mode == 1 :  absolute movement -> steer each wheel by absolute angles  
 
-Steers until all wheels are within a threshold (or timeout).
-PWM is computed using a proportional controller (`kp_steer`) and published.
+It steers until all 4 wheels are inside of an error threshold (also breaks if exceeds time threshold).
+
+PWM is computed using proportional controller kp_steer and pwm_msg is published.
+
+Then at the end, it puts steering_complete flag as True.
+
+
 
 ```python
 self.pwm_msg.data = [
@@ -189,7 +193,7 @@ self.pwm_msg.data = [
 ### Configuration 1: both locked
 
 * `forward_btn` → call `steer()` with `final_angle = initial_angle`
-* `parallel_btn` → `final_angles = [90, 90, 90, 90]`
+* `parallel_btn` → call `steer()` with `final_angles = [90, 90, 90, 90]`
 * `rotinplace_btn` → `final_angles = [45, -45, -45, 45]` and set `rotinplace = True`
 * `rot_with_pwm` (axis) → generate manual PWM, no `steer()` call
 
@@ -200,47 +204,43 @@ self.pwm_msg.data = [
 > `_enc_data_new = copy.deepcopy(self.enc_data)`
 > Used to ensure deep copy (not pointer) for `initial_angles`.
 
-* `forward_btn` → steer to `+45°`
-* `parallel_btn` → steer to `-45°`
-* `steer_same_dir_axis` → same PWM to all wheels (no `steer()` call)
-* `steer_opp_dir_axis` → front clockwise, back anticlockwise
+* `forward_btn` → steer all wheels to `+45°`
+* `parallel_btn` → steer all wheels  to `-45°`
+* `steer_same_dir_axis` → is moved → manually control all wheels with the same PWM (as in `forward_btn` case, but without calling `steer()`)
+* `steer_opp_dir_axis` → is moved → front wheels rotate clockwise, back wheels rotate anticlockwise, enabling a "twist" motion
 
 ---
 
 ### Configuration 3: full potential unlocked
 
 `full_potential_pwm = [fl, fr, bl, br]`
-Each axis directly controls corresponding steering motor via PWM.
+each axis controls each steering motor and we can manually give pwm input
 
 ---
 
-## `drive()`
+## drive()
+only works when both steering and full_potential is locked i.e __configuration 1__
 
-> Only active in **Configuration 1** (both locked)
+* if rotinplace_btn pressed it will first go through `steering()` function to turn rover
+ into crab position and then it goes in `drive()`
 
-* If `rotinplace_btn` →
+where it publishes pwm_msg for *drive motors* with pwm that can be chosen using _self.mode_ (0 to 3) we can choose  from this array -> self.d_arr = [35,50,75,110,150] and then we can  finetune the pwm using lr_axis
 
-  1. Use `steering()` to move into crab position
-  2. Use `drive()` to publish PWM for drive motors:
+`vel = self.d_arr[self.mode] * self.drive_ctrl[1]`
 
-     ```python
-     vel = self.d_arr[self.mode] * self.drive_ctrl[1]
-     ```
+*  if `self.state == False` that is joystick control
+    
+	velocity is calculated using lr_axis and omega is calculated using fb_axis
 
----
+	`velocity` = -self.d_arr[self.mode] * self.drive_ctrl[1] # lr axis
 
-### If `self.state == False` (joystick mode)
+    `omega` = -self.d_arr[self.mode] * self.drive_ctrl[0] # fb axis
+   
+    then a moving average of velocity and omega is calculated by putting the values in queue, we do this because joystick axis might not be stable enough to give values
 
-* `velocity = -self.d_arr[self.mode] * self.drive_ctrl[1]`
-* `omega = -self.d_arr[self.mode] * self.drive_ctrl[0]`
+   then pwm_msg is published in differential drive manner using avg velocity and avg omega
 
-These are smoothed using a **moving average queue** for stability.
-PWM is then published using differential drive logic.
+* if `self.state == True` that is autonomous mode
 
----
-
-### If `self.state == True` (autonomous mode)
-
-Use predefined autonomous `velocity` and `omega`, and publish PWM in same differential manner.
-
----
+	then a predefined autonomous velocity and omega is given and again in differential drive manners its published
+	
