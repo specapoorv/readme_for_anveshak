@@ -48,6 +48,10 @@ Used to receive encoder data from an external node.
 
 ---
 
+## flow of code
+
+![flow of code](.jpg)
+
 ## Joystick Button and Axis Mapping
 
 | Name                         | Purpose                             |
