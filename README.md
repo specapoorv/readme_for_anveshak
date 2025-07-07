@@ -50,7 +50,7 @@ Used to receive encoder data from an external node.
 
 ## flow of code
 
-![flow of code](.jpg)
+![flow of code](flowchart-fun.png)
 
 ## Joystick Button and Axis Mapping
 
